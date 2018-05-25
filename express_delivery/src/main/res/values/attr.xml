@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="FrameLayoutWithHole">
+        <attr name="background_color" format="color"/>
+        <attr name="left" format="integer"/>
+        <attr name="top" format="integer"/>
+        <attr name="right" format="integer"/>
+        <attr name="bottom" format="integer"/>
+    </declare-styleable>
+</resources>

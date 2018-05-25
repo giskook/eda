@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">express_delivery</string>
+    <string name="camera_permission_not_granted">camera not granted</string>
+</resources>

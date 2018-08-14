@@ -231,6 +231,7 @@ class Camera2 extends CameraViewImpl {
         }
         collectCameraInfo();
         prepareImageReader();
+        prepareScanImageReader();
         startOpeningCamera();
         return true;
     }
@@ -248,6 +249,10 @@ class Camera2 extends CameraViewImpl {
         if (mImageReader != null) {
             mImageReader.close();
             mImageReader = null;
+        }
+        if(mScanImageReader != null){
+            mScanImageReader.close();
+            mScanImageReader = null;
         }
     }
 
@@ -518,6 +523,16 @@ class Camera2 extends CameraViewImpl {
         mImageReader.setOnImageAvailableListener(mOnImageAvailableListener, null);
     }
 
+    private void prepareScanImageReader(){
+        if (mScanImageReader != null) {
+            mScanImageReader.close();
+        }
+        Size largest = mPreviewSizes.sizes(mAspectRatio).last();
+        mScanImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
+                ImageFormat.YUV_420_888, 1);
+        mScanImageReader.setOnImageAvailableListener(mOnImageAvailableListener, null);
+    }
+
     /**
      * <p>Starts opening a camera device.</p>
      * <p>The result will be processed in {@link #mCameraDeviceCallback}.</p>
@@ -536,7 +551,7 @@ class Camera2 extends CameraViewImpl {
      * <p>The result will be continuously processed in {@link #mSessionCallback}.</p>
      */
     void startCaptureSession() {
-        if (!isCameraOpened() || !mPreview.isReady() || mImageReader == null) {
+        if (!isCameraOpened() || !mPreview.isReady() || mImageReader == null || mScanImageReader == null) {
             return;
         }
         Size previewSize = chooseOptimalSize();
@@ -549,7 +564,7 @@ class Camera2 extends CameraViewImpl {
             if (mIsScanning) {
                 mPreviewRequestBuilder.addTarget(mScanImageReader.getSurface());
             }
-            mCamera.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
+            mCamera.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface(),mScanImageReader.getSurface()),
                     mSessionCallback, null);
         } catch (CameraAccessException e) {
             throw new RuntimeException("Failed to start camera session");

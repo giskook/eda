@@ -4,6 +4,9 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -13,9 +16,17 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.giskook.express_delivery.jni.yuv;
 import com.google.android.cameraview.CameraView;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity implements
         ActivityCompat.OnRequestPermissionsResultCallback{
@@ -25,6 +36,8 @@ public class MainActivity extends AppCompatActivity implements
 
     private CameraView mCameraView;
     private Handler mBackgroundHandler;
+    private FrameLayoutWithHole mFilter;
+    private ImageView mImageView;
     private Runnable mRunnableTakePicture = new Runnable() {
         @Override
         public void run() {
@@ -40,6 +53,11 @@ public class MainActivity extends AppCompatActivity implements
             mBackgroundHandler = new Handler(thread.getLooper());
         }
         return mBackgroundHandler;
+    }
+
+    public native String yuv_string();
+    static {
+        System.loadLibrary("yuv-lib");
     }
 
     private CameraView.Callback mCallback
@@ -66,11 +84,50 @@ public class MainActivity extends AppCompatActivity implements
             Log.wtf(TAG, "bmp_width " + String.valueOf(bmp.getWidth()));
         }
 
+        private byte[] rotateYUV420Degree90(byte[] data, int imageWidth, int imageHeight)
+        {
+            byte [] yuv = new byte[imageWidth*imageHeight*3/2];
+            // Rotate the Y luma
+            int i = 0;
+            for(int x = 0;x < imageWidth;x++)
+            {
+                for(int y = imageHeight-1;y >= 0;y--)
+                {
+                    yuv[i] = data[y*imageWidth+x];
+                    i++;
+                }
+            }
+            // Rotate the U and V color components
+            i = imageWidth*imageHeight*3/2-1;
+            for(int x = imageWidth-1;x > 0;x=x-2)
+            {
+                for(int y = 0;y < imageHeight/2;y++)
+                {
+                    yuv[i] = data[(imageWidth*imageHeight)+(y*imageWidth)+x];
+                    i--;
+                    yuv[i] = data[(imageWidth*imageHeight)+(y*imageWidth)+(x-1)];
+                    i--;
+                }
+            }
+            return yuv;
+        }
+
         @Override
         public void onFramePreview(CameraView cameraView, byte[] data, int width, int height, int orientation) {
             Log.wtf(TAG,String.valueOf(data.length));
-//            Log.wtf(TAG, "bmp_width " + String.valueOf(width));
+            Log.wtf(TAG, "bmp_width " + String.valueOf(width));
             Log.wtf(TAG, "bmp_height " + String.valueOf(height));
+//            byte[] yuv = rotateYUV420Degree90(data, width, height);
+
+            YuvImage yuvimage=new YuvImage(data, ImageFormat.NV21,width,height,null);
+            ByteArrayOutputStream outer = new ByteArrayOutputStream();
+
+//            yuvimage.compressToJpeg(new Rect(0,0,width, height), 100, outer);
+//
+//            Bitmap bit_hm = Bitmap.createBitmap(bmp, mFilter.mRect.left, mFilter.mRect.top, mFilter.mRect.width(), mFilter.mRect.height());
+//
+//            mImageView.setImageBitmap(bit_hm);
+
         }
     };
 
@@ -82,8 +139,11 @@ public class MainActivity extends AppCompatActivity implements
         if(mCameraView != null) {
             mCameraView.setFlash(CameraView.FLASH_OFF);
             mCameraView.addCallback(mCallback);
-
         }
+//        Log.wtf(TAG, yuv_string());
+
+//        mFilter = findViewById(R.id.filter);
+//        mImageView = findViewById(R.id.cut_image);
     }
 
     @Override
@@ -95,7 +155,7 @@ public class MainActivity extends AppCompatActivity implements
             mCameraView.start();
             mCameraView.setScanning(true);
 
-            getBackgroundHandler().post(mRunnableTakePicture);
+//            getBackgroundHandler().post(mRunnableTakePicture);
         } else if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                 Manifest.permission.CAMERA)) {
             Log.d(TAG, "not allow use camera");

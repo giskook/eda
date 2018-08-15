@@ -18,15 +18,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
-
-import com.giskook.express_delivery.jni.yuv;
 import com.google.android.cameraview.CameraView;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Arrays;
+
 
 public class MainActivity extends AppCompatActivity implements
         ActivityCompat.OnRequestPermissionsResultCallback{
@@ -55,10 +50,6 @@ public class MainActivity extends AppCompatActivity implements
         return mBackgroundHandler;
     }
 
-    public native String yuv_string();
-    static {
-        System.loadLibrary("yuv-lib");
-    }
 
     private CameraView.Callback mCallback
             = new CameraView.Callback() {
@@ -117,12 +108,26 @@ public class MainActivity extends AppCompatActivity implements
             Log.wtf(TAG,String.valueOf(data.length));
             Log.wtf(TAG, "bmp_width " + String.valueOf(width));
             Log.wtf(TAG, "bmp_height " + String.valueOf(height));
+
 //            byte[] yuv = rotateYUV420Degree90(data, width, height);
 
-            YuvImage yuvimage=new YuvImage(data, ImageFormat.NV21,width,height,null);
-            ByteArrayOutputStream outer = new ByteArrayOutputStream();
+            byte[] dst = yuv_crop(data, height, width, 0, 0, 200, 200);
+            YuvImage yuvimage=new YuvImage(dst, ImageFormat.NV21,200,200,null);
+//            ByteArrayOutputStream outer = new ByteArrayOutputStream();
+//            yuvimage.compressToJpeg(new Rect(0,0,200, 200), 100, outer);
+//            byte[] imageBytes = outer.toByteArray();
+//            Bitmap bmp = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+//
+//            Bitmap bit_hm = Bitmap.createBitmap(bmp, 0, 0, 200, 200);
+//            mImageView.setImageBitmap(bit_hm);
 
+//            mImageView.setImageBitmap(bit_hm);
+//            YuvImage yuvimage=new YuvImage(data, ImageFormat.NV21,width,height,null);
+//
+//            ByteArrayOutputStream outer = new ByteArrayOutputStream();
 //            yuvimage.compressToJpeg(new Rect(0,0,width, height), 100, outer);
+//            byte[] imageBytes = outer.toByteArray();
+//            Bitmap bmp = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
 //
 //            Bitmap bit_hm = Bitmap.createBitmap(bmp, mFilter.mRect.left, mFilter.mRect.top, mFilter.mRect.width(), mFilter.mRect.height());
 //
@@ -140,10 +145,10 @@ public class MainActivity extends AppCompatActivity implements
             mCameraView.setFlash(CameraView.FLASH_OFF);
             mCameraView.addCallback(mCallback);
         }
-//        Log.wtf(TAG, yuv_string());
+        Log.wtf(TAG, yuv_string());
 
-//        mFilter = findViewById(R.id.filter);
-//        mImageView = findViewById(R.id.cut_image);
+        mFilter = findViewById(R.id.filter);
+        mImageView = findViewById(R.id.cut_image);
     }
 
     @Override
@@ -200,5 +205,10 @@ public class MainActivity extends AppCompatActivity implements
                 // No need to start camera here; it is handled by onResume
                 break;
         }
+    }
+    public native String yuv_string();
+    public native byte[] yuv_crop(byte[] src, int height, int width, int left, int top, int dheight, int dwidth);
+    static {
+        System.loadLibrary("yuv-lib");
     }
 }

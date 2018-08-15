@@ -104,7 +104,7 @@ public class CameraViewTest {
 
     @Test
     @FlakyTest
-    public void preview_isShowing() throws Exception {
+    public void preview_isShowing() {
         onView(withId(R.id.camera))
                 .perform(waitFor(1000))
                 .check(showingPreview());
@@ -309,7 +309,7 @@ public class CameraViewTest {
         }
 
         @Override
-        public void close() throws IOException {
+        public void close() {
             mCameraView.removeCallback(mCallback);
         }
 
@@ -361,7 +361,7 @@ public class CameraViewTest {
         }
 
         @Override
-        public void close() throws IOException {
+        public void close() {
             mCameraView.removeCallback(mCallback);
         }
 

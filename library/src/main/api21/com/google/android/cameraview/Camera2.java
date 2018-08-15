@@ -162,9 +162,27 @@ class Camera2 extends CameraViewImpl {
             try (Image image = reader.acquireNextImage()) {
                 Image.Plane[] planes = image.getPlanes();
                 if (planes.length > 0) {
-                    ByteBuffer buffer = planes[0].getBuffer();
-                    byte[] data = new byte[buffer.remaining()];
-                    buffer.get(data);
+//                    ByteBuffer buffer = planes[0].getBuffer();
+//                    byte[] data = new byte[buffer.remaining()];
+//                    buffer.get(data);
+//                    if(image.getFormat() == ImageFormat.JPEG){
+//                        mCallback.onPictureTaken(data);
+//                    }else{
+//                        mCallback.onFramePreview(data, image.getWidth(), image.getHeight(), mDisplayOrientation);
+//                    }
+//                    image.close();
+                    Image.Plane Y = planes[0];
+                    Image.Plane U = planes[1];
+                    Image.Plane V = planes[2];
+
+                    int Yb = Y.getBuffer().remaining();
+                    int Ub = U.getBuffer().remaining();
+                    int Vb = V.getBuffer().remaining();
+                    byte[] data = new byte[Yb + Ub + Vb];
+                    Y.getBuffer().get(data, 0, Yb);
+                    U.getBuffer().get(data, Yb, Ub);
+                    V.getBuffer().get(data, Yb+ Ub, Vb);
+
                     if(image.getFormat() == ImageFormat.JPEG){
                         mCallback.onPictureTaken(data);
                     }else{
